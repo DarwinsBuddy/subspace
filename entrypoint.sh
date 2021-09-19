@@ -163,7 +163,32 @@ cat <<WGSERVER >/data/wireguard/server.conf
 PrivateKey = $(cat /data/wireguard/server.private)
 ListenPort = ${SUBSPACE_LISTENPORT}
 
+
 WGSERVER
+
+if [ ! -z "${SUBSPACE_FORWARD_GW-}" ];
+then
+  echo "PostUp   = iptables -A FORWARD -i %i -j ACCEPT; iptables -A FORWARD -o %i -j ACCEPT; iptables -t nat -A POSTROUTING -o ${SUBSPACE_FORWARD_GW} -j MASQUERADE" >> /data/wireguard/server.conf
+  echo "PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -D FORWARD -o %i -j ACCEPT; iptables -t nat -D POSTROUTING -o ${SUBSPACE_FORWARD_GW} -j MASQUERADE" >> /data/wireguard/server.conf
+fi
+
+if [ ! -z "${SUBSPACE_PREUP-}" ];
+then
+  echo "PreUp = $SUBSPACE_PREUP" >> /data/wireguard/server.conf
+fi
+if [ ! -z "${SUBSPACE_PREDOWN-}" ];
+then
+  echo "PreDown = $SUBSPACE_PREDOWN" >> /data/wireguard/server.conf
+fi
+if [ ! -z "${SUBSPACE_POSTUP-}" ];
+then
+  echo "PostUp = $SUBSPACE_POSTUP" >> /data/wireguard/server.conf
+fi
+if [ ! -z "${SUBSPACE_POSTDOWN-}" ];
+then
+  echo "PostDown = $SUBSPACE_POSTDOWN" >> /data/wireguard/server.conf
+fi
+
 cat /data/wireguard/peers/*.conf >>/data/wireguard/server.conf
 umask ${umask_val}
 [ -f /data/config.json ] && chmod 600 /data/config.json # Special handling of file not created by start-up script
@@ -171,7 +196,11 @@ umask ${umask_val}
 if ip link show wg0 2>/dev/null; then
   ip link del wg0
 fi
-ip link add wg0 type wireguard
+
+cp /data/wireguard/server.conf /data/wireguard/wg0.conf
+wg-quick up /data/wireguard/wg0.conf
+
+#ip link add wg0 type wireguard
 if [[ ${SUBSPACE_IPV4_NAT_ENABLED} -ne 0 ]]; then
   export SUBSPACE_IPV4_CIDR=$(echo ${SUBSPACE_IPV4_POOL-} | cut -d '/' -f2)
   ip addr add ${SUBSPACE_IPV4_GW}/${SUBSPACE_IPV4_CIDR} dev wg0
@@ -180,8 +209,6 @@ if [[ ${SUBSPACE_IPV6_NAT_ENABLED} -ne 0 ]]; then
   export SUBSPACE_IPV6_CIDR=$(echo ${SUBSPACE_IPV6_POOL-} | cut -d '/' -f2)
   ip addr add ${SUBSPACE_IPV6_GW}/${SUBSPACE_IPV6_CIDR} dev wg0
 fi
-wg setconf wg0 /data/wireguard/server.conf
-ip link set wg0 up
 
 # dnsmasq service
 if [[ ${SUBSPACE_DISABLE_DNS} == "0" ]]; then
@@ -252,3 +279,4 @@ RUNIT
 fi
 
 exec $@
+

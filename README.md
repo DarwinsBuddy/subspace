@@ -133,6 +133,11 @@ $ subspace --http-host subspace.example.com
 | `SUBSPACE_THEME`            | `green`             | The theme to use, please refer to [semantic-ui](https://semantic-ui.com/usage/theming.html) for accepted colors                                      |
 | `SUBSPACE_BACKLINK`         | `/`                 | The page to set the home button to                                                                                                                   |
 | `SUBSPACE_DISABLE_DNS`      | `false`             | Whether to disable DNS so the client uses their own configured DNS server(s). Consider disabling DNS server, if supporting international VPN clients |
+| `SUBSPACE_PREUP`           | null             | PreUp=Action for wireguard server interface |
+| `SUBSPACE_PREDOWN`          | null             | PreDown=Action for wireguard server interface |
+| `SUBSPACE_POSTUP`           | null             | PostUp=Action for wireguard server interface |
+| `SUBSPACE_POSTDOWN`         | null             | PostDown=Action for wireguard server interface |
+| `SUBSPACE_FORWARD_GW`         | null             |  If set, will forward to this device (e.g. a nic in a different subnet) e.g. eth0, wlan0|
 
 ### Run as a Docker container
 
